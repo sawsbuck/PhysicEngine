@@ -1,0 +1,8 @@
+import numpy as np
+WIDTH, HEIGHT = 800, 600
+FPS = 100
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GRAVITY = np.array([-100, -100])
+COEFFICIENT_OF_RESTITUTION = 1
+FRICTION = 1
