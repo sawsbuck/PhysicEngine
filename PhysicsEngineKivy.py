@@ -6,11 +6,11 @@ from Constants import *
 class PhysicsEngine:
     def __init__(self):
         self.bodies = []
-        self.ground = RigidBody(position=[0, -(HEIGHT-20)], velocity=[0, 0], mass=float('inf'), radius=0, color=WHITE)
+        self.ground = RigidBody(position=[0, HEIGHT-20], velocity=[0, 0], mass=float('inf'), radius=0, color=WHITE)
 
     def add_body(self, position, velocity, mass, radius, color):
         self.bodies.append(RigidBody(position, velocity, mass, radius, color))
-
+        
     def apply_forces_and_update(self, dt):
         for body in self.bodies:
             body.apply_force(GRAVITY * body.mass, dt)
@@ -34,10 +34,6 @@ class PhysicsEngine:
             if body.position[1] + body.radius > self.ground.position[1]:
                 body.velocity[1] = -abs(body.velocity[1]) * COEFFICIENT_OF_RESTITUTION
                 body.position[1] = self.ground.position[1] - body.radius
-                body.velocity[0] *= FRICTION
-            if 0 > body.position[0] + body.radius or body.position[0] + body.radius > WIDTH:
-                body.velocity[0] = -abs(body.velocity[1]) * COEFFICIENT_OF_RESTITUTION
-                body.position[0] = WIDTH - body.radius
                 body.velocity[0] *= FRICTION
 
     def draw_bodies(self, canvas):
