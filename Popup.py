@@ -77,6 +77,6 @@ class ChangeValuesPopup(Popup):
             # Additional logic after saving changes, if needed
 
         except ValueError:
-            print("Invalid input. Please enter numeric values.")
+            print("Invalid input")
 
         self.dismiss()
