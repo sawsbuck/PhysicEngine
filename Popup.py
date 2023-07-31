@@ -17,13 +17,8 @@ class ChangeValuesPopup(Popup):
     def create_popup_content(self):
         content = BoxLayout(orientation='vertical')
 
-        position_label = Label(text='Position (x, y):')
-        position_input = TextInput(text=f'{self.body.position[0]}, {self.body.position[1]}', multiline=False)
-        self.ids.position_input = position_input
 
-        velocity_label = Label(text='Velocity (x, y):')
-        velocity_input = TextInput(text=f'{self.body.velocity[0]}, {self.body.velocity[1]}', multiline=False)
-        self.ids.velocity_input = velocity_input
+
 
         mass_label = Label(text='Mass:')
         mass_input = TextInput(text=str(self.body.mass), multiline=False)
@@ -41,10 +36,6 @@ class ChangeValuesPopup(Popup):
         save_button = Button(text='Save Changes', on_release=self.save_changes)
         cancel_button = Button(text='Cancel', on_release=self.dismiss)
 
-        content.add_widget(position_label)
-        content.add_widget(position_input)
-        content.add_widget(velocity_label)
-        content.add_widget(velocity_input)
         content.add_widget(mass_label)
         content.add_widget(mass_input)
         content.add_widget(radius_label)
@@ -62,19 +53,12 @@ class ChangeValuesPopup(Popup):
 
     def save_changes(self, *args):
         try:
-            x, y = map(float, self.ids.position_input.text.split(','))
-            self.body.position = [x, y]
-
-            vx, vy = map(float, self.ids.velocity_input.text.split(','))
-            self.body.velocity = [vx, vy]
 
             self.body.mass = float(self.ids.mass_input.text)
             self.body.radius = float(self.ids.radius_input.text)
 
             r, g, b = map(int, self.ids.color_input.text.split(','))
             self.body.color = (r, g, b)
-
-            # Additional logic after saving changes, if needed
 
         except ValueError:
             print("Invalid input")

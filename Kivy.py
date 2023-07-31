@@ -15,7 +15,7 @@ from Popup import ChangeValuesPopup
 class PhysicsSimulation(Widget):
     def __init__(self, **kwargs):
         super(PhysicsSimulation, self).__init__(**kwargs)
-        self.physics_engine = PhysicsEngine()
+        self.physics_engine = PhysicsEngine(time_step=0.1 / FPS)
         Clock.schedule_interval(self.update, 1 / FPS)
 
     def on_touch_down(self, touch):
@@ -26,17 +26,12 @@ class PhysicsSimulation(Widget):
                     self.show_change_values_popup(body)
                     break
             else:
-                # Create a new ball at the touch position when no ball is clicked
-                self.physics_engine.add_body(
-                    position=[mouse_x, mouse_y],
-                    velocity=[0, 0],  # Set the initial velocity as needed
-                    mass=1,          # Set the mass and radius as needed
-                    radius=20,
-                    color=RED
-                )
+    
+                self.physics_engine.add_body(position=[mouse_x, mouse_y],velocity=[0, 0], mass=1,radius=20,color=RED)
 
     def update(self, dt):
-        self.physics_engine.apply_forces_and_update(dt)
+        
+        self.physics_engine.apply_forces(dt)
         self.physics_engine.handle_collisions()
         self.physics_engine.collide_with_ground()
         self.canvas.clear()

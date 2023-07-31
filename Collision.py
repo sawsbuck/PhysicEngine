@@ -1,84 +1,69 @@
 import numpy as np
 
+class Collision:
+    def project_polygon_onto_axis(self, polygon, axis):
+        dots = np.dot(polygon, axis)
+        return np.min(dots), np.max(dots)
 
+    def intervals_overlap(self, interval1, interval2):
+        return interval1[0] <= interval2[1] and interval1[1] >= interval2[0]
 
-def project_polygon_onto_axis(polygon, axis):
-    polygon = np.array(polygon)
-    axis = np.array(axis)
-    
-    dots = [np.dot(vertex, axis) for vertex in polygon]
-    print(dots)
-    return min(dots), max(dots)
+    def get_axis(self, polygon):
+        edges = np.diff(polygon, axis=0)
+        return [np.array([-edge[1], edge[0]]) for edge in edges]
 
-def intervals_overlap(interval1, interval2):
-    return interval1[0] <= interval2[1] and interval1[1] >= interval2[0]
-
-def get_axis(polygon):
-    polygon = np.array(polygon)
-    edges = [(polygon[(i + 1) % len(polygon)] - polygon[i]) for i in range(len(polygon))]
-    axis = [np.array([-edge[1], edge[0]]) for edge in edges]
-    return axis//np.linalg.norm(axis)
-
-def sat_collision(polygon1, polygon2):
-    axes = get_axis(polygon1) + get_axis(polygon2)
-    
-    for axis in axes:
-        projection1 = project_polygon_onto_axis(polygon1, axis)
-        projection2 = project_polygon_onto_axis(polygon2, axis)
+    def sat_collision(self, polygon1, polygon2):
+        axes = self.get_axis(polygon1) + self.get_axis(polygon2)
         
-        if not intervals_overlap(projection1, projection2):
-            return False,None
-    
-    return True,axes
-
-def calculate_penetration_vector(polygon1, polygon2, axis):
-    polygon1 = np.array(polygon1)
-    polygon2 = np.array(polygon2)
-    
-    min_overlap = float('inf')
-    min_overlap_axis = None
-    projection = project_polygon_onto_axis(polygon1, axis)
-    overlap = intervals_overlap(projection, project_polygon_onto_axis(polygon2, axis))
-    if not overlap:
-        return None
-
-    if projection[1] - projection[0] < min_overlap:
-        min_overlap = projection[1] - projection[0]
-        min_overlap_axis = axis
-
-
-    projection = project_polygon_onto_axis(polygon2, axis)
-    overlap = intervals_overlap(projection, project_polygon_onto_axis(polygon1, axis))
-
-    if not overlap:
-        return None
-
-    if projection[1] - projection[0] < min_overlap:
-        min_overlap = projection[1] - projection[0]
-        min_overlap_axis = -axis
-
-    return min_overlap_axis * min_overlap
-
-def resolve_collision(polygon1, polygon2):
-    collides, axes = sat_collision(polygon1, polygon2)
-    if collides:
-        mtv = None
-        min_mtv_length = float('inf')
-
         for axis in axes:
-            penetration_vector = calculate_penetration_vector(polygon1, polygon2, axis)
-            if penetration_vector is not None:
-                mtv_length = np.linalg.norm(penetration_vector)
-                if mtv_length < min_mtv_length:
-                    mtv = penetration_vector
-                    min_mtv_length = mtv_length
+            projection1 = self.project_polygon_onto_axis(polygon1, axis)
+            projection2 = self.project_polygon_onto_axis(polygon2, axis)
+            
+            if not self.intervals_overlap(projection1, projection2):
+                return False, None
+        
+        return True, axes
 
-        if mtv is not None:
-            for i in range(len(polygon1)):
-                polygon1[i] += mtv
-            for i in range(len(polygon2)):
-                polygon2[i] += mtv  
+    def calculate_penetration_vector(self, polygon1, polygon2, axis):
+        projection1 = self.project_polygon_onto_axis(polygon1, axis)
+        projection2 = self.project_polygon_onto_axis(polygon2, axis)
 
-            return True
+        overlap = self.intervals_overlap(projection1, projection2)
+        if not overlap:
+            return None
 
-    return False
+        min_overlap = np.min([projection1[1] - projection2[0], projection2[1] - projection1[0]])
+        return axis * min_overlap
+
+    def resolve_collision(self, polygon1, polygon2):
+        collides, axes = self.sat_collision(polygon1, polygon2)
+        if collides:
+            mtv = None
+            min_mtv_length = float('inf')
+
+            for axis in axes:
+                penetration_vector = self.calculate_penetration_vector(polygon1, polygon2, axis)
+                if penetration_vector is not None:
+                    mtv_length = np.linalg.norm(penetration_vector)
+                    if mtv_length < min_mtv_length:
+                        mtv = penetration_vector
+                        min_mtv_length = mtv_length
+
+            if mtv is not None:
+        
+                new_polygon1 = polygon1 + mtv
+                new_polygon2 = polygon2 + mtv
+                return mtv, new_polygon1, new_polygon2
+
+        return None, polygon1, polygon2
+
+    def check_circle_collision(circle1, circle2):
+        delta = circle2.position - circle1.position
+        distance_squared = np.dot(delta, delta)
+        if distance_squared < (circle1.radius + circle2.radius) ** 2:
+            distance = np.sqrt(distance_squared)
+            normal = delta / distance
+            penetration_depth = (circle1.radius + circle2.radius) - distance
+            return True, normal, penetration_depth
+        else:
+            return False, np.array([0.0, 0.0]), 0.0

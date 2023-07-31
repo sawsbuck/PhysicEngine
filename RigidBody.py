@@ -1,37 +1,59 @@
 import numpy as np
-import sys
 from Constants import *
-
-import numpy as np
 
 class RigidBody:
     def __init__(self, position, velocity, mass, radius, color, vertices=None):
         self.position = np.array(position, dtype=float)
+        self.prev_position = np.array(position, dtype=float)
         self.velocity = np.array(velocity, dtype=float)
         self.mass = mass
         self.radius = radius
         self.color = color
         self.vertices = vertices
+        self.orientation = 0.0  
+        self.angular_velocity = 0.0
+        self.force_accumulator = np.array([0.0, 0.0], dtype=float)
 
-    def transform_vertices(self, vertices, position):
-        self.vertices += self.position
-        return vertices
+    def apply_force(self, force):
+        self.force_accumulator += force
 
-    def apply_force(self, force, dt):
-        acceleration = force / self.mass
+    def clear_forces(self):
+        self.force_accumulator.fill(0.0)
+
+    def update_with_impulse(self, dt):
+
+        acceleration = self.force_accumulator / self.mass
         self.velocity += acceleration * dt
 
-    def update(self, dt):
         self.position += self.velocity * dt
 
+    def clear_forces(self):
+        self.force_accumulator.fill(0.0)
 
-def check_circle_collision(circle1, circle2):
-    delta = circle2.position - circle1.position
-    distance_squared = np.dot(delta, delta)
-    if distance_squared < (circle1.radius + circle2.radius) ** 2:
-        distance = np.sqrt(distance_squared)
-        normal = delta / distance
-        penetration_depth = (circle1.radius + circle2.radius) - distance
-        return True, normal, penetration_depth
-    else:
-        return False, np.array([0.0, 0.0]), 0.0
+    def apply_torque(self, torque, dt):
+        angular_acceleration = torque / self.mass
+        self.angular_velocity += angular_acceleration * dt
+
+    def update(self, dt):
+        if self.vertices is not None:
+            delta_position = self.position - self.prev_position
+            self.prev_position = np.copy(self.position)
+            self.position += self.velocity + 0.5 * self.acceleration * dt**2
+            for i in range(len(self.vertices)):
+                self.vertices[i] += delta_position
+
+            delta_angle = self.angular_velocity * dt
+            self.angle += delta_angle
+        else:
+            self.prev_position = np.copy(self.position)
+            self.position += self.velocity + 0.5 * self.acceleration * dt**2
+            self.angle += self.angular_velocity * dt
+
+    def rotate(self, angle_radians):
+        self.angle += angle_radians
+
+class StaticBody:
+    def __init__(self, position, vertices, color):
+        self.position = np.array(position, dtype=float)
+        self.vertices = vertices
+        self.color = color
