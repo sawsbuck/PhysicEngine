@@ -9,6 +9,8 @@ class PhysicsEngine:
     def __init__(self,time_step):
         self.bodies = []
         self.time_step = time_step
+        self.ground = RigidBody(position=[0, 0], velocity=[0, 0], mass=float('inf'), radius=0, color=WHITE, vertices=[[0, 0], [WIDTH, 0], [0, 20], [WIDTH, 20]])
+        self.narrow_collision = Collision()
     def add_body(self, position, velocity, mass, radius, color,vertices = None):
         self.bodies.append(RigidBody(position, velocity, mass, radius, color,vertices))
     def add_static_body(self, position, velocity, mass, radius, color,vertices = None):
@@ -28,25 +30,27 @@ class PhysicsEngine:
                 for body2 in self.bodies[i+1:]:
                      
                         if body1.vertices == None and body2.vertices == None:
-                            is_collision, normal, penetration_depth = Collision.check_circle_collision(body1, body2)
+                            is_collision, normal, penetration_depth = self.narrow_collision.check_circle_collision(body1, body2)
                             if is_collision:
                                 total_mass = body1.mass + body2.mass
                                 impulse = (1 + COEFFICIENT_OF_RESTITUTION) * (body1.velocity - body2.velocity).dot(normal) / total_mass
                                 if not body1.is_static: 
                                     body1.velocity -= impulse * normal * body2.mass
-                                if not body1.is_static:
+                                if not body2.is_static:
                                     body2.velocity += impulse * normal * body1.mass
                                 separation = normal * penetration_depth / total_mass
                                 body1.position -= separation * body2.mass
-                                body2.position += separation * body1.mass
+                                body2.position += separation * body1.mass    
                         elif body1.vertices != None and body2.vertices != None:
-                
-                            is_collision,axes = Collision.Polygon_collision(body1.vertices,body2.vertices)
+                            
+                            is_collision,axes = self.narrow_collision.Polygon_collision(body1.vertices,body2.vertices)
+                            #print(is_collision)
                             if is_collision:
-                                mtv = Collision.resolve_collision(body1.vertices,body2.vertices,axes)
-                                body1.position += mtv
-                                body2.position -= mtv
-
+                                
+                                mtv,_,_ = self.narrow_collision.resolve_collision(body1.vertices,body2.vertices,axes)
+                                #print(mtv)
+                                body1.position -= 1
+                                body2.position += 1
 
 
 

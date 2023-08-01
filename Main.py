@@ -30,7 +30,11 @@ class PhysicsSimulation(Widget):
                 self.physics_engine.add_body(position=[mouse_x, mouse_y],velocity=[0, 0], mass=1,radius=20,color=RED)
         if touch.button == 'right':
             mouse_x, mouse_y = touch.pos
-            self.physics_engine.add_body(position=[mouse_x, mouse_y],velocity=[0, 0], mass=1,radius=20,color=RED,vertices = PolygonVertices(4,100,0) )
+            y=0
+            self.physics_engine.add_body(position=[mouse_x, mouse_y],velocity=[0, 0], mass=1,radius=50,color=RED,vertices = PolygonVertices(4,100,0))
+            y += 100
+            
+
     def update(self, dt):
         
         self.physics_engine.apply_forces(dt)

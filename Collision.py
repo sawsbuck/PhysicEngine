@@ -50,9 +50,9 @@ class Collision:
         if mtv is not None:
             new_polygon1 = polygon1 + mtv
             new_polygon2 = polygon2 + mtv
-            return mtv, new_polygon1, new_polygon2
+            return np.array(mtv), new_polygon1, new_polygon2
 
-    def check_circle_collision(circle1, circle2):
+    def check_circle_collision(self,circle1, circle2):
         delta = circle2.position - circle1.position
         distance_squared = np.dot(delta, delta)
         if distance_squared < (circle1.radius + circle2.radius) ** 2:

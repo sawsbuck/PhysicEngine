@@ -14,10 +14,11 @@ class RigidBody:
         self.orientation = 0.0  
         self.angular_velocity = 0.0
         self.force_accumulator = np.array([0.0, 0.0], dtype=float)
+        self.is_static = is_static
 
     def apply_force(self, force):
         self.force_accumulator += force
-
+        
     def clear_forces(self):
         self.force_accumulator.fill(0.0)
 
@@ -36,19 +37,18 @@ class RigidBody:
         self.angular_velocity += angular_acceleration * dt
 
     def update(self, dt):
+        
+        delta_position = self.position - self.prev_position
+        delta_angle = self.angular_velocity * dt
+        self.prev_position = np.copy(self.position)
+        self.position += self.velocity * dt + 0.5 * self.acceleration * dt ** 2
         if self.vertices is not None:
-            delta_position = self.position - self.prev_position
-            self.prev_position = np.copy(self.position)
-            self.position += self.velocity + 0.5 * self.acceleration * dt**2
-            for i in range(len(self.vertices)):
-                self.vertices[i] += delta_position
-
-            delta_angle = self.angular_velocity * dt
-            self.angle += delta_angle
-        else:
-            self.prev_position = np.copy(self.position)
-            self.position += self.velocity + 0.5 * self.acceleration * dt**2
-            self.angle += self.angular_velocity * dt
+            self.vertices = np.array([(self.position[0] + x, self.position[1] + y) for x, y in self.vertices])
+            if self.orientation != 0.0:
+                rotation_matrix = np.array([[np.cos(self.orientation), -np.sin(self.orientation)],
+                                            [np.sin(self.orientation), np.cos(self.orientation)]])
+                self.vertices = np.dot(self.vertices, rotation_matrix.T)
+        self.orientation += delta_angle
 
     def rotate(self, angle_radians):
         self.angle += angle_radians
