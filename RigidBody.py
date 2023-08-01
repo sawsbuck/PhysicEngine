@@ -2,7 +2,8 @@ import numpy as np
 from Constants import *
 
 class RigidBody:
-    def __init__(self, position, velocity, mass, radius, color, vertices=None):
+    def __init__(self, position, velocity, mass, radius, color, vertices=None, is_static = False):
+        
         self.position = np.array(position, dtype=float)
         self.prev_position = np.array(position, dtype=float)
         self.velocity = np.array(velocity, dtype=float)
@@ -52,8 +53,3 @@ class RigidBody:
     def rotate(self, angle_radians):
         self.angle += angle_radians
 
-class StaticBody:
-    def __init__(self, position, vertices, color):
-        self.position = np.array(position, dtype=float)
-        self.vertices = vertices
-        self.color = color

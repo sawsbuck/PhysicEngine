@@ -1,53 +1,57 @@
-import pygame
-import sys
-from PhysicsEngine import PhysicsEngine
+import kivy
+kivy.require('2.0.0')
+
+from kivy.app import App
+from kivy.uix.widget import Widget
+from kivy.graphics import Color, Ellipse,Rectangle
+from kivy.clock import Clock
+from kivy.core.window import Window
+
+
+from PhysicsEngine import *
 from RigidBody import *
 from Constants import *
-pygame.init()
+from Popup import ChangeValuesPopup
+from PolygonVertices import PolygonVertices
+class PhysicsSimulation(Widget):
+    def __init__(self, **kwargs):
+        super(PhysicsSimulation, self).__init__(**kwargs)
+        self.physics_engine = PhysicsEngine(time_step=0.1 / FPS)
+        Clock.schedule_interval(self.update, 1 / FPS)
 
-# Constants
+    def on_touch_down(self, touch):
+        if touch.button == 'left':
+            mouse_x, mouse_y = touch.pos
+            for body in self.physics_engine.bodies:
+                if self.is_point_inside_circle(mouse_x, mouse_y, body):
+                    self.show_change_values_popup(body)
+                    break
+            else:
+                self.physics_engine.add_body(position=[mouse_x, mouse_y],velocity=[0, 0], mass=1,radius=20,color=RED)
+        if touch.button == 'right':
+            mouse_x, mouse_y = touch.pos
+            self.physics_engine.add_body(position=[mouse_x, mouse_y],velocity=[0, 0], mass=1,radius=20,color=RED,vertices = PolygonVertices(4,100,0) )
+    def update(self, dt):
+        
+        self.physics_engine.apply_forces(dt)
+        self.physics_engine.handle_collisions()
+        self.physics_engine.collide_with_ground()
+        self.canvas.clear()
+        self.physics_engine.draw_bodies(self.canvas)
+
+    def is_point_inside_circle(self, x, y, body):
+        return (x - body.position[0]) ** 2 + (y - body.position[1]) ** 2 < body.radius ** 2
+
+    def show_change_values_popup(self, body):
+        popup = ChangeValuesPopup(body)
+        popup.open()
 
 
+class PhysicsApp(App):
+    def build(self):
+        Window.size = (WIDTH, HEIGHT)
+        return PhysicsSimulation()
 
-
-
-
-def main():
-    pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("SAT 2D Physics Engine")
-    clock = pygame.time.Clock()
-
-    physics_engine = PhysicsEngine()
-
-    while True:
-        dt = clock.tick(FPS) / 30.0
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                # Create a new ball at the mouse click position when left-clicked
-                mouse_x, mouse_y = event.pos
-                physics_engine.add_body(
-                    position=[mouse_x, mouse_y],
-                    velocity=[0, 0],  # Set the initial velocity as needed
-                    mass=1,          # Set the mass and radius as needed
-                    radius=20,
-                    color=RED
-                )
-
-
-
-        screen.fill((0, 0, 0))
-
-        physics_engine.apply_forces_and_update(dt)
-        physics_engine.handle_collisions()
-        physics_engine.collide_with_ground()
-        physics_engine.draw_bodies(screen)
-
-        pygame.display.flip()
 
 if __name__ == "__main__":
-    main()
+    PhysicsApp().run()

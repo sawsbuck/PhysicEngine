@@ -12,7 +12,7 @@ class Collision:
         edges = np.diff(polygon, axis=0)
         return [np.array([-edge[1], edge[0]]) for edge in edges]
 
-    def sat_collision(self, polygon1, polygon2):
+    def Polygon_collision(self, polygon1, polygon2):
         axes = self.get_axis(polygon1) + self.get_axis(polygon2)
         
         for axis in axes:
@@ -23,7 +23,8 @@ class Collision:
                 return False, None
         
         return True, axes
-
+    
+    
     def calculate_penetration_vector(self, polygon1, polygon2, axis):
         projection1 = self.project_polygon_onto_axis(polygon1, axis)
         projection2 = self.project_polygon_onto_axis(polygon2, axis)
@@ -35,27 +36,21 @@ class Collision:
         min_overlap = np.min([projection1[1] - projection2[0], projection2[1] - projection1[0]])
         return axis * min_overlap
 
-    def resolve_collision(self, polygon1, polygon2):
-        collides, axes = self.sat_collision(polygon1, polygon2)
-        if collides:
-            mtv = None
-            min_mtv_length = float('inf')
+    def resolve_collision(self, polygon1, polygon2,axes):
+        mtv = None
+        min_mtv_length = float('inf')
 
-            for axis in axes:
-                penetration_vector = self.calculate_penetration_vector(polygon1, polygon2, axis)
-                if penetration_vector is not None:
-                    mtv_length = np.linalg.norm(penetration_vector)
-                    if mtv_length < min_mtv_length:
-                        mtv = penetration_vector
-                        min_mtv_length = mtv_length
-
-            if mtv is not None:
-        
-                new_polygon1 = polygon1 + mtv
-                new_polygon2 = polygon2 + mtv
-                return mtv, new_polygon1, new_polygon2
-
-        return None, polygon1, polygon2
+        for axis in axes:
+            penetration_vector = self.calculate_penetration_vector(polygon1, polygon2, axis)
+            if penetration_vector is not None:
+                mtv_length = np.linalg.norm(penetration_vector)
+                if mtv_length < min_mtv_length:
+                    mtv = penetration_vector
+                    min_mtv_length = mtv_length
+        if mtv is not None:
+            new_polygon1 = polygon1 + mtv
+            new_polygon2 = polygon2 + mtv
+            return mtv, new_polygon1, new_polygon2
 
     def check_circle_collision(circle1, circle2):
         delta = circle2.position - circle1.position
