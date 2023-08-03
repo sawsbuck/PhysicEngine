@@ -47,7 +47,7 @@ class PhysicsEngine:
                             #print(is_collision)
                             if is_collision:
                                 
-                                mtv,_,_ = self.narrow_collision.resolve_collision(body1.vertices,body2.vertices,axes)
+                                mtv,_,_ = self.narrow_collision.resolve_collision(body1.position + body1.vertices,body2.position + body2.vertices,axes)
                                 #print(mtv)
                                 body1.position -= 1
                                 body2.position += 1
