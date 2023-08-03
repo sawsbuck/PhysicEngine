@@ -46,9 +46,9 @@ class PhysicsEngine:
                             is_collision,axes = self.narrow_collision.Polygon_collision(body1.vertices,body2.vertices)
                             #print(is_collision)
                             if is_collision:
-                                body1points = body1.position + body1.vertices
-                                body2points = body2.position + body2.vertices
-                                mtv,_,_ = self.narrow_collision.resolve_collision(,axes)
+                                body1points = body1.position + [rotatevector(i) for i in body1.vertices]
+                                body2points = body2.position + [rotatevector(i) for i in body2.vertices]
+                                mtv,_,_ = self.narrow_collision.resolve_collision(body1points,body2points,axes)
                                 #print(mtv)
                                 body1.position -= 1
                                 body2.position += 1
@@ -81,7 +81,7 @@ class PhysicsEngine:
             else:
                 with canvas:
                     Color(*body.color)
-                    points = [(body.position[0] + x, body.position[1] + y) for x, y in body.vertices]
+                    points = body.position + bpdy.vertices
                     Line(points=points, close=True)
         with canvas:
             Color(*self.ground.color)
