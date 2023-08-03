@@ -42,12 +42,6 @@ class RigidBody:
         delta_angle = self.angular_velocity * dt
         self.prev_position = np.copy(self.position)
         self.position += self.velocity * dt + 0.5 * self.acceleration * dt ** 2
-        if self.vertices is not None:
-            self.vertices = np.array([(self.position[0] + x, self.position[1] + y) for x, y in self.vertices])
-            if self.orientation != 0.0:
-                rotation_matrix = np.array([[np.cos(self.orientation), -np.sin(self.orientation)],
-                                            [np.sin(self.orientation), np.cos(self.orientation)]])
-                self.vertices = np.dot(self.vertices, rotation_matrix.T)
         self.orientation += delta_angle
 
     def rotate(self, angle_radians):
