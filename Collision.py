@@ -36,8 +36,8 @@ class Collision:
         min_overlap = np.min([projection1[1] - projection2[0], projection2[1] - projection1[0]])
         return axis * min_overlap
 
-    def resolve_collision(self, polygon1, polygon2,axes):
-        mtv = None
+    def resolve_collision(self, polygon1, polygon2, axes):
+        mtv = np.zeros(2)  # Initialize MTV to a zero vector
         min_mtv_length = float('inf')
 
         for axis in axes:
@@ -47,8 +47,9 @@ class Collision:
                 if mtv_length < min_mtv_length:
                     mtv = penetration_vector
                     min_mtv_length = mtv_length
-        if mtv is not None:
-            return np.array(mtv)
+
+        return mtv/np.linalg.norm(mtv) # Return the calculated MTV, even if it's a zero vector
+
 
     def check_circle_collision(self,circle1, circle2):
         delta = circle2.position - circle1.position
