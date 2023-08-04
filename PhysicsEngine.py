@@ -42,16 +42,17 @@ class PhysicsEngine:
                                 body1.position -= separation * body2.mass
                                 body2.position += separation * body1.mass    
                         elif body1.vertices != None and body2.vertices != None:
-                            
-                            is_collision,axes = self.narrow_collision.Polygon_collision(body1.vertices,body2.vertices)
-                            #print(is_collision)
+                            body1points = body1.position + body1.vertices
+                            body2points = body2.position + body2.vertices
+                            is_collision,axes = self.narrow_collision.Polygon_collision(body1points,body2points)
+
                             if is_collision:
-                                body1points = body1.position + body1.vertices
-                                body2points = body2.position + body2.vertices
-                                mtv,_,_ = self.narrow_collision.resolve_collision(,axes)
+
+                                mtv = self.narrow_collision.resolve_collision(body1points,body2points,axes)
                                 #print(mtv)
-                                body1.position -= 1
-                                body2.position += 1
+                              
+                                body1.velocity = -mtv/100
+                                body2.velocity = mtv/100
 
 
 

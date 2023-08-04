@@ -48,9 +48,7 @@ class Collision:
                     mtv = penetration_vector
                     min_mtv_length = mtv_length
         if mtv is not None:
-            new_polygon1 = polygon1 + mtv
-            new_polygon2 = polygon2 + mtv
-            return np.array(mtv), new_polygon1, new_polygon2
+            return np.array(mtv)
 
     def check_circle_collision(self,circle1, circle2):
         delta = circle2.position - circle1.position
