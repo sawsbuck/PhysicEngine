@@ -1,6 +1,4 @@
 import numpy as np
-from kivy.graphics import Color, Ellipse, Rectangle, Line
-from kivy.vector import Vector
 from RigidBody import RigidBody
 from Constants import *
 from Collision import Collision
@@ -9,7 +7,7 @@ class PhysicsEngine:
     def __init__(self,time_step):
         self.bodies = []
         self.time_step = time_step
-        self.ground = RigidBody(position=[0, 0], velocity=[0, 0], mass=float('inf'), radius=0, color=WHITE, vertices=[[0, 0], [WIDTH, 0], [0, 20], [WIDTH, 20]])
+        self.ground = RigidBody(position=[0, 0], velocity=[0, 0], mass=float('inf'), radius=0, color=WHITE, vertices=np.array([[0, 0], [WIDTH, 0], [0, 20], [WIDTH, 20]]))
         self.narrow_collision = Collision()
     def add_body(self, position, velocity, mass, radius, color,vertices = None):
         self.bodies.append(RigidBody(position, velocity, mass, radius, color,vertices))
@@ -35,22 +33,51 @@ class PhysicsEngine:
 
     def handle_circle_collision(self, circle1, circle2):
         is_collision, normal, penetration_depth = self.narrow_collision.check_circle_collision(circle1, circle2)
-        if is_collision:
-            total_mass = circle1.mass + circle2.mass
-            impulse = (1 + COEFFICIENT_OF_RESTITUTION) * (circle1.velocity - circle2.velocity).dot(normal) / total_mass
+        if not is_collision:
+            return
 
+        # relative velocity
+        v_rel = circle1.velocity - circle2.velocity
+        vel_along_normal = np.dot(v_rel, normal)
+
+        # Do not resolve if velocities are separating
+        if vel_along_normal > 0:
+            # still correct penetration if any
+            pass
+
+        # inverse masses (static or infinite mass -> inv_mass = 0)
+        inv_mass1 = 0.0 if circle1.is_static or circle1.mass == float('inf') else 1.0 / circle1.mass
+        inv_mass2 = 0.0 if circle2.is_static or circle2.mass == float('inf') else 1.0 / circle2.mass
+
+        # compute impulse scalar (standard formula)
+        denom = inv_mass1 + inv_mass2
+        if denom == 0:
+            return
+
+        # restitution
+        e = COEFFICIENT_OF_RESTITUTION
+        j = -(1 + e) * vel_along_normal / denom
+
+        # if objects are moving apart, j may be negative; skip impulse application
+        if j != 0:
             if not circle1.is_static:
-                circle1.velocity -= impulse * normal * circle2.mass
+                circle1.velocity += (j * inv_mass1) * normal
             if not circle2.is_static:
-                circle2.velocity += impulse * normal * circle1.mass
+                circle2.velocity -= (j * inv_mass2) * normal
 
-            separation = normal * penetration_depth / total_mass
-            circle1.position -= separation * circle2.mass
-            circle2.position += separation * circle1.mass
+        # positional correction to avoid sinking (percent bias)
+        percent = 0.8  # positional correction percentage
+        correction_denom = denom
+        if correction_denom > 0 and penetration_depth > 0:
+            correction = (penetration_depth / correction_denom) * percent * normal
+            if not circle1.is_static:
+                circle1.position += correction * inv_mass1
+            if not circle2.is_static:
+                circle2.position -= correction * inv_mass2
 
     def handle_polygon_collision(self, body1, body2):
-        body1points = body1.position + body1.vertices
-        body2points = body2.position + body2.vertices
+        body1points = body1.position + np.array(body1.vertices)
+        body2points = body2.position + np.array(body2.vertices)
         is_collision, axes = self.narrow_collision.Polygon_collision(body1points, body2points)
 
         if is_collision:
@@ -80,7 +107,7 @@ class PhysicsEngine:
             ground_bottom = self.ground.position[1]
             if body.position[1] - body.radius < ground_bottom:
                 penetration_depth = ground_bottom - (body.position[1] - body.radius)
-                body.position += Vector(0, penetration_depth)
+                body.position += np.array([0.0, penetration_depth])
                 normal = np.array([0.0, 1.0])
                 relative_velocity = body.velocity
                 normal_velocity = np.dot(relative_velocity, normal)
@@ -102,16 +129,34 @@ class PhysicsEngine:
 
 
     def draw_bodies(self, canvas):
-        for body in self.bodies:
-            if body.vertices is None:
-                with canvas:
-                    Color(*body.color)
-                    Ellipse(pos=(body.position[0] - body.radius, body.position[1] - body.radius), size=(body.radius * 2, body.radius * 2))
-            else:
-                with canvas:
-                    Color(*body.color)
-                    points = [(body.position[0] + x, body.position[1] + y) for x, y in body.vertices]
-                    Line(points=points, close=True)
-        with canvas:
-            Color(*self.ground.color)
-            Rectangle(pos=self.ground.position, size=(WIDTH, 20))
+        # Drawing is UI-specific; PhysicsEngine is UI-agnostic now.
+        pass
+
+    def step(self, dt):
+        """Advance the physics simulation by dt seconds (single update)."""
+        self.apply_forces(dt)
+        self.handle_collisions()
+        self.collide_with_ground()
+
+    def get_state(self):
+        """Return a serializable snapshot of bodies for external renderers.
+
+        Format: list of dicts: {id, position:[x,y], velocity:[x,y], radius, color:[r,g,b], vertices:[[x,y],...], is_static}
+        """
+        out = []
+        for i, body in enumerate(self.bodies):
+            vertices = None
+            if body.vertices is not None:
+                vertices = [list(map(float, v)) for v in np.array(body.vertices)]
+
+            out.append({
+                "id": i,
+                "position": [float(body.position[0]), float(body.position[1])],
+                "velocity": [float(body.velocity[0]), float(body.velocity[1])],
+                "radius": float(body.radius),
+                "color": list(body.color),
+                "vertices": vertices,
+                "is_static": bool(body.is_static)
+            })
+
+        return {"bodies": out, "ground": {"position": [float(self.ground.position[0]), float(self.ground.position[1])], "color": list(self.ground.color)}}

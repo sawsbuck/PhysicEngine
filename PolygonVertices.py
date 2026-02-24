@@ -9,4 +9,4 @@ def PolygonVertices(number_vertices, length, breadth):
     degrees = 360 / number_vertices
     apothem = length / (2 * np.tan(np.pi / number_vertices))
     vertices = [rotate_vector([0, apothem], degrees * i) for i in range(number_vertices)]
-    return vertices
+    return np.array(vertices)

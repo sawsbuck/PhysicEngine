@@ -48,16 +48,26 @@ class Collision:
                     mtv = penetration_vector
                     min_mtv_length = mtv_length
 
-        return mtv/np.linalg.norm(mtv) # Return the calculated MTV, even if it's a zero vector
+        norm = np.linalg.norm(mtv)
+        if norm == 0:
+            return np.zeros(2)
+        return mtv / norm
 
 
     def check_circle_collision(self,circle1, circle2):
         delta = circle2.position - circle1.position
         distance_squared = np.dot(delta, delta)
-        if distance_squared < (circle1.radius + circle2.radius) ** 2:
+        radius_sum = (circle1.radius + circle2.radius)
+        if distance_squared < radius_sum ** 2:
+            # handle coincident centers (distance == 0)
+            if distance_squared == 0:
+                normal = np.array([1.0, 0.0])
+                penetration_depth = radius_sum
+                return True, normal, penetration_depth
+
             distance = np.sqrt(distance_squared)
             normal = delta / distance
-            penetration_depth = (circle1.radius + circle2.radius) - distance
+            penetration_depth = radius_sum - distance
             return True, normal, penetration_depth
-        else:
-            return False, np.array([0.0, 0.0]), 0.0
+
+        return False, np.array([0.0, 0.0]), 0.0
